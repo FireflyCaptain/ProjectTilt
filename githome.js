@@ -8,7 +8,7 @@ var groupTimeStamps = function(matchlist){
 	//list of all games in a play session
 	playSession=[];
 	//for each match except the last match (most recent ranked game)
-	for (var i =0;i < 20;i++){
+	for (var i =0;i < 9;i++){
 		console.log(matchlist[i].matchId);
 		//add it to a playSession list
 		playSession.push(matchlist[i].matchId);
@@ -27,27 +27,28 @@ var groupTimeStamps = function(matchlist){
 var getWL= function(game, callback){
 	//set game to the request
 	request('https://na.api.pvp.net/api/lol/na/v2.2/match/'+game+'?api_key=<API_KEY>', function (error, response, body){
-		
+		var result;
 		if(!error && response.statusCode ==200){
 			var one= JSON.parse(body);
 			//console.log(one.participants);
 			console.log(game);
 			for (var i = 0; i < one.participantIdentities.length; i++) {
 				if (one.participantIdentities[i].player.summonerId === 31167575){
-				console.log(one.participants[i].stats.winner);
+					result = one.participants[i].stats.winner;
 				}
 			}
 
 		}
-		else{
-			console.log("someting wong");
-		}
-		callback();
+		callback(result);
 	});
 	
 }
 
 //function that converts Match ID to W/L
+function doAnalysis(playSesh){
+	console.log(playSesh);
+}
+
 var convertWL = function(playSesh){
 	//for each play session
 	async.forEachOfSeries(playSesh, function(currentSession, i, callback){
@@ -57,28 +58,34 @@ var convertWL = function(playSesh){
 		console.log("Checking play session "+i);
 		console.log("There are "+ playSesh[i].length +" games played");
 
-		//WHOLE NEW THANG
+		//Implement asynchronization so secondary API Calls return in-order
 			async.forEachOfSeries(playSesh[i], function(game, j, callback2) {
-				console.log(j);
-				playSesh[i][j]= getWL(game, callback2);
+				
+				//playSesh[i][j]= getWL(game, callback2);
+				getWL(game, function(result){
+					playSesh[i][j] = result;
+					callback2();
+				});
 		}, callback);
 
-	}, function(){console.log("weeeee");});
+	}, function(){doAnalysis(playSesh);});
+	
 }
 
 //original API Call for Summoner ID
-request('https://na.api.pvp.net/api/lol/na/v2.2/matchlist/by-summoner/31167575?rankedQueues=RANKED_SOLO_5x5&seasons=PRESEASON3,SEASON3,PRESEASON2014,SEASON2014,PRESEASON2015,SEASON2015,PRESEASON2016,SEASON2016&api_key=<API_KEY>', function (error, response, body) {
+request('https://na.api.pvp.net/api/lol/na/v2.2/matchlist/by-summoner/31167575?rankedQueues=RANKED_SOLO_5x5,TEAM_BUILDER_DRAFT_RANKED_5x5&seasons=PRESEASON3,SEASON3,PRESEASON2014,SEASON2014,PRESEASON2015,SEASON2015,PRESEASON2016,SEASON2016&api_key=<API_KEY>', function (error, response, body) {
   if (!error && response.statusCode == 200) {
     var jsonBody = JSON.parse(body);
 
     for (i in jsonBody.matches)
     {
-    	//console.log(jsonBody.matches[i].matchId);
+    	console.log(jsonBody.matches[i].matchId);
     	//console.log(jsonBody.matches[i].timestamp);	
     }
     var sessions = groupTimeStamps(jsonBody.matches);
 
     console.log(sessions.length+ " play sessions");
     convertWL(sessions);
+
   }
 });
