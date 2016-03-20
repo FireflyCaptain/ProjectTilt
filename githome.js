@@ -1,5 +1,6 @@
 var request = require('request');
 var async = require('async');
+var sleep = require('sleep');
 
 //function that returns all-time winrate
 function doTotalWinrate(Sessions){
@@ -59,7 +60,7 @@ function doLastGame(Sessions){
 	lastGame=lastGame-(lastGame%1);
 	return lastGame+"%";
 }
-
+//STILL NEEDS WORK
 //Looks to see if losing two games in the middle of a play session negatively affects winrate afterwards
 function doPivotTwo(Sessions){
 	for (i in Sessions){
@@ -78,7 +79,7 @@ function doPivotTwo(Sessions){
 
 
 }
-
+//STILL NEEDS WORK
 //Looks at a loss in the middle of the play session to compare winrate before and after the loss
 function doPivotOne(Sessions){
 	//total number of wins before the loss pivot
@@ -100,6 +101,7 @@ function doPivotOne(Sessions){
 		}
 	}
 }
+//STILL NEEDS WORK
 //looks at win rate after third loss
 function doFirstLoss(Sessions){
 	for (i in Sessions){
@@ -208,7 +210,7 @@ function doThreeLoss(Sessions){
 	//calculate winrate for the remainder of the play sessions after losing the first game
 	threeLoss=((threeLoss*100)/threeTotal);
 	//shave off decimals
-	threeWin= threeLoss - (threeLoss%1);
+	threeLoss= threeLoss - (threeLoss%1);
 	if (threeTotal===0){
 		return "Not Enough Data";
 	}
@@ -238,7 +240,7 @@ function doTwoLoss(Sessions){
 	//calculate winrate for the remainder of the play sessions after losing the first game
 	twoLoss=((twoLoss*100)/twoTotal);
 	//shave off decimals
-	twoWin= twoLoss - (twoLoss%1);
+	twoLoss= twoLoss - (twoLoss%1);
 	if (twoTotal===0){
 		return "Not Enough Data";
 	}
@@ -295,7 +297,7 @@ console.log(Sessions);
 	console.log("Your average winrate when playing exactly two games is "+ doSessionLengths(Sessions, 2));
 	console.log("Your average winrate when playing exactly three games is "+ doSessionLengths(Sessions, 3));
 	console.log("Your average winrate when playing exactly four games is "+ doSessionLengths(Sessions, 4));
-	console.log("Your average winrate when playing exactly five or more games is "+ doSessionLengths(Sessions, 5));
+	console.log("Your average winrate when playing exactly five games is "+ doSessionLengths(Sessions, 5));
 }
 
 //function that sorts the matches into play sessions via timestamp
@@ -305,7 +307,7 @@ var groupTimeStamps = function(matchlist){
 	//list of all games in a play session
 	playSession=[];
 	//for each match
-	for (var i =10;i < 19;i++){
+	for (var i =0; i < 100; i++){
 		console.log(matchlist[i].matchId);
 		//add it to a playSession list
 		playSession.push(matchlist[i].matchId);
@@ -348,14 +350,16 @@ var convertWL = function(playSesh){
 //function that helps convertWL by making an API Call for a single match
 var getWL= function(game, callback){
 	//set game to the request
-	request('https://na.api.pvp.net/api/lol/na/v2.2/match/'+game+'?api_key=<API_KEY>', function (error, response, body){
+	sleep.sleep(1);
+	request('https://na.api.pvp.net/api/lol/na/v2.2/match/'+game+'?api_key=api_key', function (error, response, body){
 		var result;
 		if(!error && response.statusCode ==200){
 			var one= JSON.parse(body);
 			//console.log(one.participants);
 			console.log(game);
+			
 			for (var i = 0; i < one.participantIdentities.length; i++) {
-				if (one.participantIdentities[i].player.summonerId === 31167575){
+				if (one.participantIdentities[i].player.summonerId === 9875){
 					result = one.participants[i].stats.winner;
 				}
 			}
@@ -367,10 +371,10 @@ var getWL= function(game, callback){
 }
 
 //original API Call for Summoner ID
-request('https://na.api.pvp.net/api/lol/na/v2.2/matchlist/by-summoner/31167575?rankedQueues=RANKED_SOLO_5x5,TEAM_BUILDER_DRAFT_RANKED_5x5&seasons=PRESEASON3,SEASON3,PRESEASON2014,SEASON2014,PRESEASON2015,SEASON2015,PRESEASON2016,SEASON2016&api_key=<API_KEY>', function (error, response, body) {
+request('https://na.api.pvp.net/api/lol/na/v2.2/matchlist/by-summoner/9875?rankedQueues=RANKED_SOLO_5x5,TEAM_BUILDER_DRAFT_RANKED_5x5&seasons=PRESEASON3,SEASON3,PRESEASON2014,SEASON2014,PRESEASON2015,SEASON2015,PRESEASON2016,SEASON2016&api_key=api_key', function (error, response, body) {
   if (!error && response.statusCode == 200) {
     var jsonBody = JSON.parse(body);
-
+    sleep.sleep(2);
     for (i in jsonBody.matches)
     {
     	console.log(jsonBody.matches[i].matchId);
