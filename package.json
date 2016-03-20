@@ -1,0 +1,33 @@
+{
+  "name": "projecttilt",
+  "version": "1.0.0",
+  "description": "Analytic Research Project to understand play patterns in League of Legends ranked play. Groups matches in Summoners' play history by timestamp and prints to the screen whether they won or lost each game",
+  "main": "githome.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FireflyCaptain/ProjectTilt.git"
+  },
+  "keywords": [
+    "T",
+    "I",
+    "L",
+    "T",
+    "E",
+    "D"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/FireflyCaptain/ProjectTilt/issues"
+  },
+  "homepage": "https://github.com/FireflyCaptain/ProjectTilt#readme",
+  "dependencies": {
+    "async": "^1.5.2",
+    "express": "^4.13.4",
+    "request": "^2.69.0",
+    "sleep": "^3.0.1"
+  }
+}
