@@ -2,6 +2,7 @@ var request = require('request');
 var async = require('async');
 var sleep = require('sleep');
 var readline = require('readline');
+
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
@@ -26,7 +27,7 @@ function doTotalWinrate(Sessions){
 	wins= wins - (wins%1);
 	return wins+"%.";
 }
-
+//NEED TO FIX THIS
 //function that returns the average winrate for a play session with <number> games
 function doSessionLengths(Sessions, number){
 	//how many wins in sessions of <number> length
@@ -54,16 +55,16 @@ function doSessionLengths(Sessions, number){
 }
 
 //function that returns winrate of the first game if the final game of the previous session was a loss
-function doLastGame(Sessions){
+function doWinAfterBreak(Sessions){
 	//tracks the number of wins after a break following a loss
 	var winAfterBreak=0;
 	//tracks the number of sessions that ended on a loss
 	var totalAfterBreak=0;
-	for (var i=0; i < Sessions.length-2; i++){
+	for (var i=Sessions.length-1; i >0 ; i--){
 		//checks if player lost final game of play session
 		if (Sessions[i][0]===false){
 			totalAfterBreak++;
-			if (Sessions[(i+1)][0]===true){
+			if (Sessions[(i-1)][(Sessions[(i-1)].length-1)]===true){
 				winAfterBreak++;
 			}
 		}
@@ -222,7 +223,7 @@ function doTwoThirdsLoss(Sessions){
 	if (twoThirdsTotal===0){
 		return "Not Enough Data";
 	}
-	return twoThirds+ "% with a sample size of "+num+" sessions.";
+	return twoThirds+ "% (sample size "+num+" sessions)";
 }
 //NOT USED currently
 //function that returns the average winrate in play sessions after losing 1/3 first games
@@ -230,6 +231,7 @@ function doOneThirdsLoss(Sessions){
 	var oneThirds =0;
 	var oneThirdsTotal=0;
 	//console.log(Sessions);
+	var num=0;
 	for (i in Sessions){
 		//if at least four games were played in a row
 		if (Sessions[i].length >3){
@@ -261,7 +263,7 @@ function doOneThirdsLoss(Sessions){
 	if (twoThirdsTotal===0){
 		return "Not Enough Data";
 	}
-	return twoThirds+ "%";
+	return twoThirds+ "% (sample size "+num+" sessions) ";
 }
 
 //function that returns the average winrate in play sessions after losing the first three games
@@ -269,6 +271,7 @@ function doThreeLoss(Sessions){
 	var threeLoss =0;
 	var threeTotal =0;
 	//console.log(Sessions);
+	var num=0;
 	for (i in Sessions){
 		//if at least four games were played in a row
 		if (Sessions[i].length>3){
@@ -281,6 +284,7 @@ function doThreeLoss(Sessions){
 					}
 					threeTotal++;
 				}
+				num++;
 			}
 		}
 	}
@@ -291,7 +295,7 @@ function doThreeLoss(Sessions){
 	if (threeTotal===0){
 		return "Not Enough Data";
 	}
-	return threeLoss+ "%";
+	return threeLoss+ "% (sample size "+num+" sessions) ";
 }
 
 //function that returns the average winrate in play sessions after losing the first two games
@@ -299,6 +303,7 @@ function doTwoLoss(Sessions){
 	var twoLoss =0;
 	var twoTotal =0;
 	//console.log(Sessions);
+	var num=0;
 	for (i in Sessions){
 		//if at least three games were played in a row
 		if (Sessions[i].length>2){
@@ -311,6 +316,7 @@ function doTwoLoss(Sessions){
 					}
 					twoTotal++;
 				}
+				num++;
 			}
 		}
 	}
@@ -321,7 +327,7 @@ function doTwoLoss(Sessions){
 	if (twoTotal===0){
 		return "Not Enough Data";
 	}
-	return twoLoss+ "%";
+	return twoLoss+ "% (sample size "+num+" sessions) ";
 }
 
 //function that returns the average winrate in play sessions after losing the first game
@@ -370,9 +376,9 @@ console.log(Sessions);
 
 	console.log("If you lose two of your first three games of a ranked session, your average winrate is "+doTwoThirdsLoss(Sessions)+" for the remaining games");
 
-	console.log('You are '+doLastGame(Sessions)+' likely to end your ranked session on a loss.');
+	console.log('Following a break after ending a ranked session on a loss, your winrate is '+doWinAfterBreak(Sessions));
 	console.log('Your winrate immediately following a loss is: '+ doImmediateOne(Sessions));
-	console.log('Your winrate immediately following two losses is: '+ doImmediateTwo(Sessions));
+	console.log('Your winrate immediately following two or more losses is: '+ doImmediateTwo(Sessions));
 	//gets winrates for play sessions of 1-5 games longs
 	console.log("Your average winrate when playing exactly one game is "+ doSessionLengths(Sessions, 1));
 	console.log("Your average winrate when playing exactly two games is "+ doSessionLengths(Sessions, 2));
@@ -388,23 +394,25 @@ console.log(Sessions);
 }
 
 //function that sorts the matches into play sessions via timestamp
-var groupTimeStamps = function(matchlist){
+var groupTimeStamps = function(matchlist, time){
 	//list of all playsessions
 	sortedMatches=[];
 	//list of all games in a play session
 	playSession=[];
 	//for each match
 	var length = matchlist.length-1;
+	//variable that stores the split interval between two games
+	var split = time*1000;
 	//if (length>100){
 	//	length=100;
 	//}
 	for (var i =0; i < length; i++){
-		console.log(matchlist[i].matchId);
+		console.log(matchlist[i].timestamp);
 		//add it to a playSession list
 		playSession.push(matchlist[i].matchId);
 		//if the previous match's timestamp is not within one hour of the current one
-		if (matchlist[i].timestamp -3600000 > matchlist[i+1].timestamp){
-			console.log();
+		if (matchlist[i].timestamp -split > matchlist[i+1].timestamp){
+		//	console.log();
 			//add the playSession to the list of play sessions
 			sortedMatches.push(playSession);
 			//reset the playSession list
@@ -438,11 +446,11 @@ var convertWL = function(playSesh){
 	
 }
 
-//function that helps convertWL by making an API Call for a single match
+//function that helps convertWL by making an API Call for a single matchID
 var getWL= function(game, callback){
 	//set game to the request
 	sleep.usleep(1200001);
-	request('https://na.api.pvp.net/api/lol/na/v2.2/match/'+game+'?api_key=api_key', function (error, response, body){
+	request('https://na.api.pvp.net/api/lol/na/v2.2/match/'+game+'?api_key=<API_KEY>', function (error, response, body){
 		var result;
 		if(!error && response.statusCode ==200){
 			var one= JSON.parse(body);
@@ -453,8 +461,9 @@ var getWL= function(game, callback){
 				if (one.participantIdentities[i].player.summonerId === summonerID){
 					result = one.participants[i].stats.winner;
 				}
-			}//126237
 
+			}
+				console.log(one.matchCreation+" "+ one.matchDuration);
 		}
 		callback(result);
 	});
@@ -465,16 +474,17 @@ summonerID=answer+'';
 summonerID=parseFloat(summonerID);
 
 //original API Call for Summoner ID
-request('https://na.api.pvp.net/api/lol/na/v2.2/matchlist/by-summoner/'+summonerID+'?rankedQueues=RANKED_SOLO_5x5,TEAM_BUILDER_DRAFT_RANKED_5x5&seasons=PRESEASON3,SEASON3,PRESEASON2014,SEASON2014,PRESEASON2015,SEASON2015,PRESEASON2016,SEASON2016&api_key=api_key', function (error, response, body) {
+request('https://na.api.pvp.net/api/lol/na/v2.2/matchlist/by-summoner/'+summonerID+'?rankedQueues=RANKED_SOLO_5x5,TEAM_BUILDER_DRAFT_RANKED_5x5&seasons=PRESEASON3,SEASON3,PRESEASON2014,SEASON2014,PRESEASON2015,SEASON2015,PRESEASON2016,SEASON2016&api_key=<API_KEY>', function (error, response, body) {
   if (!error && response.statusCode == 200) {
     var jsonBody = JSON.parse(body);
     sleep.usleep(1200001);
-    for (i in jsonBody.matches)
-    {
-    	console.log(jsonBody.matches[i].matchId);
+    //for (i in jsonBody.matches)
+    //{
+    	
+    	//console.log(jsonBody.matches[i].matchId);
     	//console.log(jsonBody.matches[i].timestamp);	
-    }
-    var sessions = groupTimeStamps(jsonBody.matches);
+    //}
+    var sessions = groupTimeStamps(jsonBody.matches, 3600);
 
     console.log(sessions.length+ " play sessions");
     convertWL(sessions);
