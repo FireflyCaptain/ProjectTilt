@@ -1,7 +1,7 @@
 import requests
 import time
 
-api_key = 'deff85ac-e3f6-4510-9c17-de9a1320bdfe'
+api_key = ''
 region = 'na'
 
 #not implemented yet
